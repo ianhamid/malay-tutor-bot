@@ -39,7 +39,6 @@ Formatting rules:
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
     system_instruction=SYSTEM_INSTRUCTION,
-    tools='google_search_retrieval', # <-- THIS ENABLES LIVE SEARCH GROUNDING
     generation_config={"temperature": 0.1} 
 )
 
