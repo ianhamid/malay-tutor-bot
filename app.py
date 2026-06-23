@@ -21,7 +21,7 @@ if not check_password():
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('models/gemini-1.5-pro')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # UPDATED: Header changed to just "Madam K"
 st.title("Madam K")
