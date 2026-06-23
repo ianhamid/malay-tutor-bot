@@ -1,28 +1,23 @@
 import streamlit as st
 import os
+from dotenv import load_dotenv
 from google import genai
-from google.genai import types
+
+load_dotenv()
 
 st.set_page_config(page_title="Madam K", page_icon="🇲🇾")
 
-# 1. Global Client (Pre-warmed)
+# 1. Global Client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# 2. Simple Caching for Speed
-@st.cache_data(ttl=3600)
-def get_fast_response(prompt):
+# 2. Stream response WITHOUT caching (streaming + cache = conflict)
+def get_tutor_response(prompt):
+    """Stream Malay tutor response from Gemini."""
     instruction = "You are a warm Malay tutor. Concise, emojis, DBP definition."
+    
     return client.models.generate_content_stream(
-        model='gemini-2.0-flash-lite', # Stable, high-availability model
+        model='gemini-2.0-flash-lite',
         contents=f"{instruction}\n\nQuestion: {prompt}"
-    )
-    # Stream the content directly
-    return client.models.generate_content_stream(
-        model='gemini-3.5-flash',
-        contents=f"{instruction}\n\nQuestion: {prompt}",
-        config=types.GenerateContentConfig(
-            safety_settings=[types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE")]
-        )
     )
 
 st.title("Madam K")
@@ -35,12 +30,12 @@ if prompt := st.chat_input("Apa maksud buntal...?"):
         message_placeholder = st.empty()
         full_response = ""
         
-        # Immediate streaming execution
         try:
-            for chunk in get_fast_response(prompt):
+            for chunk in get_tutor_response(prompt):
                 if chunk.text:
                     full_response += chunk.text
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
-        except Exception:
-            st.error("Too busy. Try again immediately.")
+        except Exception as e:
+            st.error(f"API Error: {str(e)}")
+            st.info("Check: API key valid? Quota available? Network stable?")
