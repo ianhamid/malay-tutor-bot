@@ -1,29 +1,14 @@
-version: '3.8'
-
 services:
-  telegram-bot:
-    build: .
-    container_name: malay-peribahasa-agent
-    command: ["python", "bot.py"]
-    env_file:
-      - .env
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
   web-interface:
     build: .
-    container_name: malay-tutor-web
-    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-    env_file:
-      - .env
     ports:
       - "8501:8501"
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
+    env_file:
+      - .env
+    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+  telegram-bot:
+    build: .
+    env_file:
+      - .env
+    command: ["python", "bot.py"] # Assuming your telegram bot file is named bot.py
