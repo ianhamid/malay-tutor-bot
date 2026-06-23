@@ -1,9 +1,10 @@
 import streamlit as st
 import google.generativeai as genai
 import os
+import time
 
 # Set up page configuration
-st.set_page_config(page_title="Cikgu AI", page_icon="🇲🇾")
+st.set_page_config(page_title="Madam K", page_icon="🇲🇾")
 
 # Password Protection
 def check_password():
@@ -22,7 +23,8 @@ if not check_password():
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-st.title("🇲🇾 Cikgu AI: Peribahasa Tutor")
+# UPDATED: Header changed to just "Madam K"
+st.title("🇲🇾 Madam K")
 
 # Chat history
 if "messages" not in st.session_state:
@@ -39,23 +41,20 @@ if prompt := st.chat_input("Apa maksud peribahasa...?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # UPDATED: Structured System Instruction
         instruction = """
         You are a warm, educational Malay tutor for children. 
-        Always follow this strict output structure:
-        1. Greeting: Start with "Hai adik!" and a friendly tone.
-        2. Introduction: Briefly introduce the peribahasa or word.
-        3. Definition: Explain the meaning clearly based on standard Malay usage (DBP).
-        4. Story/Example: Provide a simple, relatable story that explains the concept to a child.
-        5. English Equivalent: Provide the direct English translation or an idiomatic equivalent in English.
-        6. Conclusion: A short, encouraging wrap-up asking if they want to learn more.
-        
-        Use emojis throughout. Keep the tone encouraging, patient, and educational.
+        Follow this strict output structure: Greeting, Definition (DBP), Story/Example, English Equivalent, Conclusion.
+        Use emojis. Maintain a patient, encouraging tone.
         """
         
-        # Combine instructions and history for context
-        full_prompt = f"{instruction}\n\nUser Question: {prompt}"
-        response = model.generate_content(full_prompt)
-        
-        st.markdown(response.text)
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
+        # UPDATED: Added Error Handling for Quota (429)
+        try:
+            response = model.generate_content(f"{instruction}\n\nUser Question: {prompt}")
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            if "429" in str(e):
+                error_msg = "Madam K is resting for a moment, let's try again in a few seconds! ☕"
+                st.warning(error_msg)
+            else:
+                st.error("Something went wrong. Please try again.")
