@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-import time
 
 # Set up page configuration
 st.set_page_config(page_title="Madam K", page_icon="🇲🇾")
@@ -20,10 +19,15 @@ if not check_password():
     st.stop()
 
 # Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Forced to use production endpoint to avoid v1beta 404 errors
+genai.configure(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    client_options={"api_endpoint": "https://generativelanguage.googleapis.com"}
+)
+
+# Initialize the model
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# UPDATED: Header changed to just "Madam K"
 st.title("Madam K")
 
 # Chat history
@@ -47,11 +51,23 @@ if prompt := st.chat_input("Apa maksud peribahasa...?"):
         Use emojis. Maintain a patient, encouraging tone.
         """
         
-        # UPDATED: Added Error Handling for Quota (429)
         try:
-            response = model.generate_content(f"{instruction}\n\nUser Question: {prompt}")
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            # Added safety settings to prevent blocks
+            response = model.generate_content(
+                f"{instruction}\n\nUser Question: {prompt}",
+                safety_settings={
+                    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+                    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+                    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+                    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
+                }
+            )
+            
+            if response.text:
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            else:
+                st.error("Madam K was unable to generate a response.")
+                
         except Exception as e:
-            # This will show the actual error on your webpage instead of the generic message
             st.error(f"DEBUG ERROR: {str(e)}")
