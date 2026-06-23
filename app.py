@@ -9,7 +9,7 @@ st.set_page_config(page_title="Cikgu AI", page_icon="🇲🇾")
 def check_password():
     if "password_correct" not in st.session_state:
         password = st.text_input("Enter password to start learning:", type="password")
-        if password == "your_secret_password_here":
+        if password == "kukubird14":
             st.session_state["password_correct"] = True
             st.rerun()
         return False
