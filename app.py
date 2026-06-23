@@ -27,7 +27,7 @@ def get_fast_response(prompt):
 
 st.title("Madam K")
 
-if prompt := st.chat_input("Apa maksud peribahasa...?"):
+if prompt := st.chat_input("Apa maksud buntal...?"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
