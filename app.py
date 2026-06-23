@@ -37,5 +37,10 @@ if prompt := st.chat_input("Apa maksud buntal...?"):
                     message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response)
         except Exception as e:
-            st.error(f"API Error: {str(e)}")
-            st.info("Check: API key valid? Quota available? Network stable?")
+            # Debug: show actual error
+            print(f"[DEBUG] Error: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            st.error(f"API Error: {type(e).__name__}")
+            st.code(str(e), language="text")
