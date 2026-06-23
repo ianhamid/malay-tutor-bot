@@ -4,6 +4,7 @@ services:
   telegram-bot:
     build: .
     container_name: malay-peribahasa-agent
+    command: ["python", "bot.py"]
     env_file:
       - .env
     restart: unless-stopped
@@ -14,3 +15,15 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  web-interface:
+    build: .
+    container_name: malay-tutor-web
+    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
