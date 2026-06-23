@@ -53,8 +53,5 @@ if prompt := st.chat_input("Apa maksud peribahasa...?"):
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            if "429" in str(e):
-                error_msg = "Madam K is resting for a moment, let's try again in a few seconds! ☕"
-                st.warning(error_msg)
-            else:
-                st.error("Something went wrong. Please try again.")
+            # This will show the actual error on your webpage instead of the generic message
+            st.error(f"DEBUG ERROR: {str(e)}")
