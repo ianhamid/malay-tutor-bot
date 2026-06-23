@@ -11,10 +11,10 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 # 2. Simple Caching for Speed
 @st.cache_data(ttl=3600)
 def get_fast_response(prompt):
-    instruction = (
-        "You are a warm Malay tutor. "
-        "Structure: Definition (DBP), Story/Example, English, Conclusion. "
-        "Use emojis. Keep it concise."
+    instruction = "You are a warm Malay tutor. Concise, emojis, DBP definition."
+    return client.models.generate_content_stream(
+        model='gemini-2.0-flash-lite', # Stable, high-availability model
+        contents=f"{instruction}\n\nQuestion: {prompt}"
     )
     # Stream the content directly
     return client.models.generate_content_stream(
