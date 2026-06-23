@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 from google import genai
+from google.genai import types
 
 # Set up page configuration
 st.set_page_config(page_title="Madam K", page_icon="🇲🇾")
@@ -19,7 +20,7 @@ if not check_password():
     st.stop()
 
 # Configure the modern Client
-# This automatically handles the correct production API endpoints
+# The Client automatically uses the correct production endpoints
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 st.title("Madam K")
@@ -46,16 +47,16 @@ if prompt := st.chat_input("Apa maksud peribahasa...?"):
         """
         
         try:
-            # Modern API call
+            # Modern API call for the new SDK
             response = client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-3.5-flash',
                 contents=f"{instruction}\n\nUser Question: {prompt}",
-                config=genai.types.GenerateContentConfig(
+                config=types.GenerateContentConfig(
                     safety_settings=[
-                        genai.types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-                        genai.types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-                        genai.types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-                        genai.types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
                     ]
                 )
             )
