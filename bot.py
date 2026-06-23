@@ -14,9 +14,6 @@ logger = logging.getLogger(__name__)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_TOKEN_HERE")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 
-# THIS IS YOUR LOCKER KEY
-KAMUS_DEWAN_FILE_NAME = "files/6mw6a20z8tck" 
-
 # Configure Gemini
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -24,12 +21,11 @@ genai.configure(api_key=GEMINI_API_KEY)
 SYSTEM_INSTRUCTION = """
 You are a friendly, engaging, and patient Bahasa Melayu (Malay Language) tutor and "Peribahasa" (Malay idioms) expert designed specifically for children.
 
-CRITICAL RULE: You have been provided with the official 'Kamus Dewan Edisi Keempat' document. 
-Whenever the user asks about a Peribahasa or a Malay word definition, you MUST search this document first and base your answer STRICTLY on its contents. Do not invent meanings or use external assumptions.
+CRITICAL RULE: You have access to Google Search. Whenever the user asks about a Peribahasa or a Malay word definition, you MUST use Search to check authoritative Malaysian sources (like Dewan Bahasa dan Pustaka / PRPM) to ensure absolute accuracy in standard Bahasa Melayu Baku.
 
 Your core duties:
-1. Translate English or mixed phrases into correct, standard Bahasa Melayu (Bahasa Melayu Baku).
-2. If a user inputs a Peribahasa, extract the exact meaning from the Kamus Dewan document. Then, explain that meaning in simple, easy-to-understand terms for children, provide a practical example story or scenario, and give a close English equivalent if one exists.
+1. Translate English or mixed phrases into correct, standard Bahasa Melayu.
+2. If a user inputs a Peribahasa, explain its exact meaning in simple, easy-to-understand terms for children, provide a practical example story or scenario, and give a close English equivalent if one exists.
 3. If the user asks a general question, gently guide them back to learning Malay or Peribahasa.
 
 Formatting rules:
@@ -39,10 +35,11 @@ Formatting rules:
 - Always use an encouraging, polite, and safe tone. No inappropriate content.
 """
 
-# Initialize Gemini Model with System Instructions
+# Initialize Gemini Model with Google Search Grounding Enabled
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
     system_instruction=SYSTEM_INSTRUCTION,
+    tools='google_search_retrieval', # <-- THIS ENABLES LIVE SEARCH GROUNDING
     generation_config={"temperature": 0.1} 
 )
 
@@ -53,7 +50,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "You can:\n"
         "🔹 Type any sentence to translate it to Malay.\n"
         "🔹 Ask me about a Peribahasa (e.g., 'What does bagai aur dengan tebing mean?').\n\n"
-        "I have the official Kamus Dewan memorized to give you the best answers! Jom belajar! 🇲🇾"
+        "Jom belajar! 🇲🇾"
     )
     await update.message.reply_text(welcome_text)
 
@@ -64,19 +61,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
-        dictionary_file = genai.get_file(KAMUS_DEWAN_FILE_NAME)
-        response = model.generate_content([dictionary_file, user_input])
+        # Generate response using the Google Search tool
+        response = model.generate_content(user_input)
         reply_text = response.text
     except Exception as e:
         logger.error(f"Gemini API Error: {e}")
-        reply_text = "Maaf, I am having trouble opening my dictionary right now. Please try again later!"
+        reply_text = "Maaf, something went wrong while processing your request. Please try again later!"
 
     # THE SAFETY NET FIX:
     try:
-        # Try to send with formatting
         await update.message.reply_text(reply_text, parse_mode="Markdown")
     except Exception as e:
-        # If Telegram rejects the formatting, immediately send it as safe plain text!
         logger.warning(f"Telegram rejected the formatting. Sending as plain text. Error: {e}")
         await update.message.reply_text(reply_text)
 
