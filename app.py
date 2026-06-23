@@ -24,7 +24,7 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # UPDATED: Header changed to just "Madam K"
-st.title("🇲🇾 Madam K")
+st.title("Madam K")
 
 # Chat history
 if "messages" not in st.session_state:
