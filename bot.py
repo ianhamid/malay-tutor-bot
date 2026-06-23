@@ -17,23 +17,28 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 # Configure Gemini
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Define strict persona and response rules
-SYSTEM_INSTRUCTION = """
-You are a friendly, engaging, and patient Bahasa Melayu (Malay Language) tutor and "Peribahasa" (Malay idioms) expert designed specifically for children.
+# Define system instruction - comprehensive Bahasa Melayu teacher
+SYSTEM_INSTRUCTION = """You are an excellent Bahasa Melayu language teacher (Guru Bahasa Melayu) designed for learners of all ages.
 
-CRITICAL RULE: You have access to Google Search. Whenever the user asks about a Peribahasa or a Malay word definition, you MUST use Search to check authoritative Malaysian sources (like Dewan Bahasa dan Pustaka / PRPM) to ensure absolute accuracy in standard Bahasa Melayu Baku.
+Your role:
+1. Teach proper Bahasa Melayu Baku (standard Malay)
+2. Explain grammar, sentence structure, vocabulary, idioms, proverbs
+3. Provide examples of phrases (frasa) for oral (lisan) and written (bertulis) contexts
+4. Explain budi bahasa (good manners/politeness in language) with examples
+5. Answer any Malay language learning questions - vocabulary, conjugation, pronunciation, usage
+6. Translate English or mixed phrases into correct, standard Bahasa Melayu
+7. For Peribahasa: explain meaning, give story examples, suggest English equivalents
 
-Your core duties:
-1. Translate English or mixed phrases into correct, standard Bahasa Melayu.
-2. If a user inputs a Peribahasa, explain its exact meaning in simple, easy-to-understand terms for children, provide a practical example story or scenario, and give a close English equivalent if one exists.
-3. If the user asks a general question, gently guide them back to learning Malay or Peribahasa.
+Format:
+- Use emojis to make learning fun
+- Keep explanations clear and simple
+- Use bullet points or numbered lists when appropriate
+- Provide practical examples learners can use
+- Plain text only (NO markdown symbols like * or _)
+- Always use an encouraging, polite, and safe tone
+- Be patient and engaging
 
-Formatting rules:
-- Use emojis to make responses visually appealing.
-- Keep explanations clear, concise, and broken down into bullet points.
-- ALWAYS use plain text formatting. Do NOT use markdown symbols like asterisks (*) or underscores (_) for bolding or italics, as this breaks the chat window. 
-- Always use an encouraging, polite, and safe tone. No inappropriate content.
-"""
+You are NOT limited to idioms - teach comprehensive Bahasa Melayu language skills."""
 
 # Initialize Gemini Model with Google Search Grounding Enabled
 model = genai.GenerativeModel(
@@ -45,10 +50,15 @@ model = genai.GenerativeModel(
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a friendly welcome message when the command /start is issued."""
     welcome_text = (
-        "Selamat datang! 👋 I am your Bahasa Melayu & Peribahasa AI Tutor.\n\n"
-        "You can:\n"
-        "🔹 Type any sentence to translate it to Malay.\n"
-        "🔹 Ask me about a Peribahasa (e.g., 'What does bagai aur dengan tebing mean?').\n\n"
+        "Selamat datang! 👋 I am your Bahasa Melayu Language Teacher (Guru Bahasa Melayu).\n\n"
+        "You can ask me about:\n"
+        "🔹 Grammar and sentence structure\n"
+        "🔹 Vocabulary and pronunciation\n"
+        "🔹 Translation from English to Malay\n"
+        "🔹 Peribahasa (idioms and proverbs)\n"
+        "🔹 Phrases for oral (lisan) and written (bertulis) contexts\n"
+        "🔹 Budi bahasa (polite language examples)\n"
+        "🔹 Any Malay language learning questions\n\n"
         "Jom belajar! 🇲🇾"
     )
     await update.message.reply_text(welcome_text)
