@@ -22,7 +22,8 @@ if not check_password():
 # Forced to use production endpoint to avoid v1beta 404 errors
 genai.configure(
     api_key=os.getenv("GEMINI_API_KEY"),
-    client_options={"api_endpoint": "https://generativelanguage.googleapis.com"}
+    client_options={"api_endpoint": "https://generativelanguage.googleapis.com"},
+    transport="rest"
 )
 
 # Initialize the model
