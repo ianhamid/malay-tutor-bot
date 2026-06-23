@@ -1,24 +1,35 @@
 import streamlit as st
 import os
+import logging
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 st.set_page_config(page_title="Madam K", page_icon="🇲🇾")
 
-# 1. Global Client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Configure Gemini API (same as bot)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# 2. Stream response WITHOUT caching (streaming + cache = conflict)
+SYSTEM_INSTRUCTION = """You are a warm, friendly Bahasa Melayu tutor.
+- Concise responses with emojis
+- Use DBP (Dewan Bahasa dan Pustaka) standard definitions
+- Explain Peribahasa simply for learners
+- Plain text only (NO markdown symbols)"""
+
+# Initialize model (sync, like bot)
+model = genai.GenerativeModel(
+    model_name='gemini-2.5-flash',
+    system_instruction=SYSTEM_INSTRUCTION,
+    generation_config={"temperature": 0.1}
+)
+
 def get_tutor_response(prompt):
-    """Stream Malay tutor response from Gemini."""
-    instruction = "You are a warm Malay tutor. Concise, emojis, DBP definition."
-    
-    return client.models.generate_content_stream(
-        model='gemini-2.0-flash-lite',
-        contents=f"{instruction}\n\nQuestion: {prompt}"
-    )
+    """Get Malay tutor response (sync, not streaming)."""
+    return model.generate_content(prompt)
 
 st.title("Madam K")
 
@@ -27,20 +38,10 @@ if prompt := st.chat_input("Apa maksud buntal...?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        
         try:
-            for chunk in get_tutor_response(prompt):
-                if chunk.text:
-                    full_response += chunk.text
-                    message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
+            response = get_tutor_response(prompt)
+            st.markdown(response.text)
+            logger.info(f"Response sent: {len(response.text)} chars")
         except Exception as e:
-            # Debug: show actual error
-            print(f"[DEBUG] Error: {type(e).__name__}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            
-            st.error(f"API Error: {type(e).__name__}")
-            st.code(str(e), language="text")
+            logger.error(f"Error: {type(e).__name__}: {str(e)}")
+            st.error(f"⚠️ {type(e).__name__}: {str(e)}")
