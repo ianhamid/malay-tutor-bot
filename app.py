@@ -1,6 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
 import os
+from google import genai
 
 # Set up page configuration
 st.set_page_config(page_title="Madam K", page_icon="🇲🇾")
@@ -18,16 +18,9 @@ def check_password():
 if not check_password():
     st.stop()
 
-# Configure Gemini
-# Forced to use production endpoint to avoid v1beta 404 errors
-genai.configure(
-    api_key=os.getenv("GEMINI_API_KEY"),
-    client_options={"api_endpoint": "https://generativelanguage.googleapis.com"},
-    transport="rest"
-)
-
-# Initialize the model
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Configure the modern Client
+# This automatically handles the correct production API endpoints
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 st.title("Madam K")
 
@@ -53,22 +46,22 @@ if prompt := st.chat_input("Apa maksud peribahasa...?"):
         """
         
         try:
-            # Added safety settings to prevent blocks
-            response = model.generate_content(
-                f"{instruction}\n\nUser Question: {prompt}",
-                safety_settings={
-                    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
-                    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
-                    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-                    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
-                }
+            # Modern API call
+            response = client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents=f"{instruction}\n\nUser Question: {prompt}",
+                config=genai.types.GenerateContentConfig(
+                    safety_settings=[
+                        genai.types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                        genai.types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                        genai.types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                        genai.types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                    ]
+                )
             )
             
-            if response.text:
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-            else:
-                st.error("Madam K was unable to generate a response.")
-                
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            
         except Exception as e:
             st.error(f"DEBUG ERROR: {str(e)}")
