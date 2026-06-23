@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    container_name: malay-peribahasa-agent
+    env_file:
+      - .env
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
