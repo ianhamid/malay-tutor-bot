@@ -35,6 +35,7 @@ Your core duties:
 Formatting rules:
 - Use emojis to make responses visually appealing.
 - Keep explanations clear, concise, and broken down into bullet points.
+- ALWAYS use plain text formatting. Do NOT use markdown symbols like asterisks (*) or underscores (_) for bolding or italics, as this breaks the chat window. 
 - Always use an encouraging, polite, and safe tone. No inappropriate content.
 """
 
@@ -42,7 +43,7 @@ Formatting rules:
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
     system_instruction=SYSTEM_INSTRUCTION,
-    generation_config={"temperature": 0.1} # Extremely low temperature to prevent hallucination
+    generation_config={"temperature": 0.1} 
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -60,32 +61,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Route incoming text messages to the Gemini API and return the response."""
     user_input = update.message.text
     
-    # Indicate typing status while processing the massive document
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
-        # 1. Retrieve the Kamus Dewan file from Google's servers using your key
         dictionary_file = genai.get_file(KAMUS_DEWAN_FILE_NAME)
-        
-        # 2. Generate response using BOTH the dictionary file AND the user's message
         response = model.generate_content([dictionary_file, user_input])
         reply_text = response.text
     except Exception as e:
         logger.error(f"Gemini API Error: {e}")
         reply_text = "Maaf, I am having trouble opening my dictionary right now. Please try again later!"
 
-    await update.message.reply_text(reply_text, parse_mode="Markdown")
+    # THE SAFETY NET FIX:
+    try:
+        # Try to send with formatting
+        await update.message.reply_text(reply_text, parse_mode="Markdown")
+    except Exception as e:
+        # If Telegram rejects the formatting, immediately send it as safe plain text!
+        logger.warning(f"Telegram rejected the formatting. Sending as plain text. Error: {e}")
+        await update.message.reply_text(reply_text)
 
 def main() -> None:
     """Run the bot application."""
-    # Build the Telegram Application wrapper
     application = Application.builder().token(TELEGRAM_TOKEN).build()
-
-    # Register handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Start the Bot via Polling
     logger.info("Bot is starting polling...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
